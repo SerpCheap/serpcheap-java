@@ -115,7 +115,7 @@ class ParityTest {
   void missingApiKeyThrows() {
     SerpCheapException e = assertThrows(SerpCheapException.class, () -> new SerpCheap(""));
     assertEquals("missing_api_key", e.getCode());
-    assertTrue(new SerpCheap("k").search(SearchParams.of("ok")).organic.size() >= 0);
+    assertTrue(client.search(SearchParams.of("ok")).organic.size() >= 0);
   }
 
   private static void waitForHealthz() throws Exception {
