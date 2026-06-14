@@ -14,7 +14,7 @@ import java.time.Duration;
 /** Official serp.cheap SERP API client. One method: {@link #search(SearchParams)}. */
 public final class SerpCheap {
 
-  public static final String VERSION = "0.1.0";
+  public static final String VERSION = "0.1.0"; // x-release-please-version
 
   private static final ObjectMapper MAPPER = new ObjectMapper();
 
