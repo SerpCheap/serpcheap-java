@@ -112,6 +112,8 @@ class ClientTest {
               .topN(3)
               .waitFor(".loaded")
               .waitMs(500)
+              .screenshotWidth(1280)
+              .screenshotHeight(720)
               .build())
           .build());
       JsonNode scrape = bodyOf(api).get("scrape");
@@ -121,6 +123,8 @@ class ClientTest {
       assertEquals(3, scrape.get("top_n").asInt());
       assertEquals(".loaded", scrape.get("wait_for").asText());
       assertEquals(500, scrape.get("wait_ms").asInt());
+      assertEquals(1280, scrape.get("screenshot_width").asInt());
+      assertEquals(720, scrape.get("screenshot_height").asInt());
     }
   }
 
@@ -137,6 +141,8 @@ class ClientTest {
       assertFalse(scrape.has("top_n"));
       assertFalse(scrape.has("wait_for"));
       assertFalse(scrape.has("wait_ms"));
+      assertFalse(scrape.has("screenshot_width"));
+      assertFalse(scrape.has("screenshot_height"));
     }
   }
 

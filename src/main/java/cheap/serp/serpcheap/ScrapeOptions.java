@@ -7,6 +7,8 @@ public final class ScrapeOptions {
   public final Integer topN;
   public final String waitFor;
   public final Integer waitMs;
+  public final Integer screenshotWidth;
+  public final Integer screenshotHeight;
 
   private ScrapeOptions(Builder b) {
     this.renderJs = b.renderJs;
@@ -14,6 +16,8 @@ public final class ScrapeOptions {
     this.topN = b.topN;
     this.waitFor = b.waitFor;
     this.waitMs = b.waitMs;
+    this.screenshotWidth = b.screenshotWidth;
+    this.screenshotHeight = b.screenshotHeight;
   }
 
   public static Builder builder() {
@@ -26,6 +30,8 @@ public final class ScrapeOptions {
     private Integer topN;
     private String waitFor;
     private Integer waitMs;
+    private Integer screenshotWidth;
+    private Integer screenshotHeight;
 
     public Builder renderJs(boolean renderJs) {
       this.renderJs = renderJs;
@@ -49,6 +55,16 @@ public final class ScrapeOptions {
 
     public Builder waitMs(int waitMs) {
       this.waitMs = waitMs;
+      return this;
+    }
+
+    public Builder screenshotWidth(int screenshotWidth) {
+      this.screenshotWidth = screenshotWidth;
+      return this;
+    }
+
+    public Builder screenshotHeight(int screenshotHeight) {
+      this.screenshotHeight = screenshotHeight;
       return this;
     }
 

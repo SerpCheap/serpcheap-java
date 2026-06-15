@@ -55,6 +55,8 @@ SearchResponse res = client.search(SearchParams.builder()
     .scrape(ScrapeOptions.builder()
         .renderJs(true)     // render with a headless browser (optional)
         .screenshot(true)   // capture a full-page screenshot URL (optional)
+        .screenshotWidth(1280)   // screenshot width in px, default 1920, max 1920 (optional)
+        .screenshotHeight(720)   // screenshot height in px, default 1080, max 1920 (optional)
         .topN(3)            // how many top results to scrape, default 5 (optional)
         .build())
     .build());

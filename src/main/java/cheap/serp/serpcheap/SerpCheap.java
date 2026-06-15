@@ -131,6 +131,12 @@ public final class SerpCheap {
       if (o.waitMs != null) {
         scrape.put("wait_ms", o.waitMs);
       }
+      if (o.screenshotWidth != null) {
+        scrape.put("screenshot_width", o.screenshotWidth);
+      }
+      if (o.screenshotHeight != null) {
+        scrape.put("screenshot_height", o.screenshotHeight);
+      }
     }
 
     byte[] json;
