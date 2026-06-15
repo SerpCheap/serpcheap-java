@@ -7,6 +7,7 @@ public final class SearchParams {
   public final String hl;
   public final String tbs;
   public final int page;
+  public final ScrapeOptions scrape;
 
   private SearchParams(Builder b) {
     this.q = b.q;
@@ -14,6 +15,7 @@ public final class SearchParams {
     this.hl = b.hl;
     this.tbs = b.tbs;
     this.page = b.page;
+    this.scrape = b.scrape;
   }
 
   /** Build params for a query with defaults (gl="us", page=1). */
@@ -31,6 +33,7 @@ public final class SearchParams {
     private String hl;
     private String tbs;
     private int page = 1;
+    private ScrapeOptions scrape;
 
     public Builder q(String q) {
       this.q = q;
@@ -54,6 +57,11 @@ public final class SearchParams {
 
     public Builder page(int page) {
       this.page = page;
+      return this;
+    }
+
+    public Builder scrape(ScrapeOptions scrape) {
+      this.scrape = scrape;
       return this;
     }
 

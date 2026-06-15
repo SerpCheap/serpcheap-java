@@ -113,6 +113,25 @@ public final class SerpCheap {
     if (params.tbs != null) {
       payload.put("tbs", params.tbs);
     }
+    if (params.scrape != null) {
+      ObjectNode scrape = payload.putObject("scrape");
+      ScrapeOptions o = params.scrape;
+      if (o.renderJs != null) {
+        scrape.put("render_js", o.renderJs);
+      }
+      if (o.screenshot != null) {
+        scrape.put("screenshot", o.screenshot);
+      }
+      if (o.topN != null) {
+        scrape.put("top_n", o.topN);
+      }
+      if (o.waitFor != null) {
+        scrape.put("wait_for", o.waitFor);
+      }
+      if (o.waitMs != null) {
+        scrape.put("wait_ms", o.waitMs);
+      }
+    }
 
     byte[] json;
     try {

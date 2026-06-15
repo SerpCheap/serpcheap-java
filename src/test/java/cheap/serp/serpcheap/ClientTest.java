@@ -94,6 +94,70 @@ class ClientTest {
   }
 
   @Test
+  void scrapeOmittedWhenUnset() throws Exception {
+    try (MockApi api = MockApi.fixed(200, Fixtures.GOLDEN)) {
+      Fixtures.client(api.baseUrl()).search(SearchParams.of("x"));
+      assertFalse(bodyOf(api).has("scrape"));
+    }
+  }
+
+  @Test
+  void scrapeSerializedWhenSet() throws Exception {
+    try (MockApi api = MockApi.fixed(200, Fixtures.GOLDEN)) {
+      Fixtures.client(api.baseUrl()).search(SearchParams.builder()
+          .q("x")
+          .scrape(ScrapeOptions.builder()
+              .renderJs(true)
+              .screenshot(true)
+              .topN(3)
+              .waitFor(".loaded")
+              .waitMs(500)
+              .build())
+          .build());
+      JsonNode scrape = bodyOf(api).get("scrape");
+      assertNotNull(scrape);
+      assertTrue(scrape.get("render_js").asBoolean());
+      assertTrue(scrape.get("screenshot").asBoolean());
+      assertEquals(3, scrape.get("top_n").asInt());
+      assertEquals(".loaded", scrape.get("wait_for").asText());
+      assertEquals(500, scrape.get("wait_ms").asInt());
+    }
+  }
+
+  @Test
+  void scrapeOmitsUnsetSubfields() throws Exception {
+    try (MockApi api = MockApi.fixed(200, Fixtures.GOLDEN)) {
+      Fixtures.client(api.baseUrl()).search(SearchParams.builder()
+          .q("x")
+          .scrape(ScrapeOptions.builder().renderJs(true).build())
+          .build());
+      JsonNode scrape = bodyOf(api).get("scrape");
+      assertTrue(scrape.get("render_js").asBoolean());
+      assertFalse(scrape.has("screenshot"));
+      assertFalse(scrape.has("top_n"));
+      assertFalse(scrape.has("wait_for"));
+      assertFalse(scrape.has("wait_ms"));
+    }
+  }
+
+  @Test
+  void parsesScrapedResultFields() throws Exception {
+    String body = "{\"organic\":["
+        + "{\"position\":1,\"title\":\"A\",\"link\":\"https://a.example\",\"snippet\":\"s\","
+        + "\"content\":\"# Page\\nbody\",\"screenshot_url\":\"https://shot.example/a.png\"},"
+        + "{\"position\":2,\"title\":\"B\",\"link\":\"https://b.example\",\"snippet\":\"s\","
+        + "\"scrape_error\":\"timeout\"}]}";
+    try (MockApi api = MockApi.fixed(200, body)) {
+      SearchResponse res = Fixtures.client(api.baseUrl()).search(SearchParams.of("x"));
+      assertEquals("# Page\nbody", res.organic.get(0).content);
+      assertEquals("https://shot.example/a.png", res.organic.get(0).screenshotUrl);
+      assertNull(res.organic.get(0).scrapeError);
+      assertEquals("timeout", res.organic.get(1).scrapeError);
+      assertNull(res.organic.get(1).content);
+    }
+  }
+
+  @Test
   void trailingSlashBaseUrlNormalized() throws Exception {
     try (MockApi api = MockApi.fixed(200, Fixtures.GOLDEN)) {
       SerpCheap c = new SerpCheap(Fixtures.API_KEY, ClientOptions.builder()

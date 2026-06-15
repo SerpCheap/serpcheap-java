@@ -43,6 +43,23 @@ class SearchParamsTest {
   }
 
   @Test
+  void scrapeDefaultsToNull() {
+    assertNull(SearchParams.of("x").scrape);
+  }
+
+  @Test
+  void scrapeBuilderHoldsOptions() {
+    ScrapeOptions scrape = ScrapeOptions.builder().renderJs(true).topN(3).build();
+    SearchParams p = SearchParams.builder().q("x").scrape(scrape).build();
+    assertEquals(scrape, p.scrape);
+    assertEquals(Boolean.TRUE, p.scrape.renderJs);
+    assertEquals(Integer.valueOf(3), p.scrape.topN);
+    assertNull(p.scrape.screenshot);
+    assertNull(p.scrape.waitFor);
+    assertNull(p.scrape.waitMs);
+  }
+
+  @Test
   void missingQueryThrowsInvalidRequest() {
     SerpCheapException e = TestErrors.capture(() -> SearchParams.builder().build());
     assertEquals("invalid_request", e.getCode());

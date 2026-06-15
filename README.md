@@ -44,6 +44,31 @@ SearchParams params = SearchParams.builder()
 SearchResponse res = client.search(params);
 ```
 
+### Page scraping
+
+By default a search returns SERP metadata only. Attach `scrape` to also fetch the
+page content of the top results (billed on top of the search):
+
+```java
+SearchResponse res = client.search(SearchParams.builder()
+    .q("best running shoes")
+    .scrape(ScrapeOptions.builder()
+        .renderJs(true)     // render with a headless browser (optional)
+        .screenshot(true)   // capture a full-page screenshot URL (optional)
+        .topN(3)            // how many top results to scrape, default 5 (optional)
+        .build())
+    .build());
+
+for (OrganicResult r : res.organic) {
+  if (r.scrapeError != null) {
+    System.out.println(r.link + " — scrape failed: " + r.scrapeError);
+  } else {
+    System.out.println(r.link + "\n" + r.content);
+    System.out.println("screenshot: " + r.screenshotUrl);
+  }
+}
+```
+
 ### Client options
 
 ```java
