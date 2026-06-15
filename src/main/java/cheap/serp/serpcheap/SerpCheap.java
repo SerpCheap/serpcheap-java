@@ -10,8 +10,13 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpTimeoutException;
 import java.time.Duration;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
-/** Official serp.cheap SERP API client. One method: {@link #search(SearchParams)}. */
+/**
+ * Official serp.cheap API client: {@link #search(SearchParams)},
+ * {@link #scrape(ScrapeParams)}, {@link #rank(RankParams)}.
+ */
 public final class SerpCheap {
 
   public static final String VERSION = "0.1.0"; // x-release-please-version
@@ -44,10 +49,27 @@ public final class SerpCheap {
 
   /** Run a Google search. Retries transient errors (429/503/timeout) with backoff. */
   public SearchResponse search(SearchParams params) {
+    return send("/v1/search", payload -> buildSearchBody(payload, params),
+        SearchResponse.class, body -> body.path("organic").isArray());
+  }
+
+  /** Fetch and extract a single arbitrary URL (content + optional screenshot). */
+  public ScrapeResponse scrape(ScrapeParams params) {
+    return send("/v1/scrape", payload -> buildScrapeBody(payload, params),
+        ScrapeResponse.class, body -> body.path("url").isTextual());
+  }
+
+  /** Find where a url/domain ranks for a keyword across Google result pages. */
+  public RankResponse rank(RankParams params) {
+    return send("/v1/rank", payload -> buildRankBody(payload, params),
+        RankResponse.class, body -> body.path("organic").isArray());
+  }
+
+  private <T> T send(String path, Consumer<ObjectNode> body, Class<T> type, Predicate<JsonNode> valid) {
     int attempt = 0;
     for (;;) {
       try {
-        return once(params);
+        return once(path, body, type, valid);
       } catch (SerpCheapException e) {
         if (!e.isRetryable() || attempt >= maxRetries) {
           throw e;
@@ -61,10 +83,10 @@ public final class SerpCheap {
     }
   }
 
-  private SearchResponse once(SearchParams params) {
+  private <T> T once(String path, Consumer<ObjectNode> body, Class<T> type, Predicate<JsonNode> valid) {
     HttpResponse<byte[]> res;
     try {
-      res = http.send(buildRequest(params), HttpResponse.BodyHandlers.ofByteArray());
+      res = http.send(buildRequest(path, body), HttpResponse.BodyHandlers.ofByteArray());
     } catch (HttpTimeoutException e) {
       throw new SerpCheapException("client_timeout",
           "No response within " + timeout.toMillis() + " ms.");
@@ -76,10 +98,10 @@ public final class SerpCheap {
     }
 
     int status = res.statusCode();
-    JsonNode body;
+    JsonNode json;
     try {
       byte[] raw = res.body();
-      body = (raw == null || raw.length == 0) ? MAPPER.createObjectNode() : MAPPER.readTree(raw);
+      json = (raw == null || raw.length == 0) ? MAPPER.createObjectNode() : MAPPER.readTree(raw);
     } catch (IOException e) {
       if (status < 200 || status >= 300) {
         throw SerpCheapException.mapApiError(status, MAPPER.createObjectNode());
@@ -88,22 +110,21 @@ public final class SerpCheap {
     }
 
     if (status < 200 || status >= 300) {
-      throw SerpCheapException.mapApiError(status, body);
+      throw SerpCheapException.mapApiError(status, json);
     }
-    if (body == null || !body.isObject() || !body.path("organic").isArray()) {
+    if (json == null || !json.isObject() || !valid.test(json)) {
       throw new SerpCheapException("invalid_response",
           "The API response did not match the expected shape.", status);
     }
     try {
-      return MAPPER.treeToValue(body, SearchResponse.class);
+      return MAPPER.treeToValue(json, type);
     } catch (IOException e) {
       throw new SerpCheapException("invalid_response",
           "The API response could not be parsed.", status);
     }
   }
 
-  private HttpRequest buildRequest(SearchParams params) {
-    ObjectNode payload = MAPPER.createObjectNode();
+  private void buildSearchBody(ObjectNode payload, SearchParams params) {
     payload.put("q", params.q);
     payload.put("gl", params.gl != null ? params.gl : "us");
     payload.put("page", params.page);
@@ -138,6 +159,53 @@ public final class SerpCheap {
         scrape.put("screenshot_height", o.screenshotHeight);
       }
     }
+  }
+
+  private void buildScrapeBody(ObjectNode payload, ScrapeParams params) {
+    payload.put("url", params.url);
+    if (params.renderJs != null) {
+      payload.put("render_js", params.renderJs);
+    }
+    if (params.screenshot != null) {
+      payload.put("screenshot", params.screenshot);
+    }
+    if (params.waitFor != null) {
+      payload.put("wait_for", params.waitFor);
+    }
+    if (params.waitMs != null) {
+      payload.put("wait_ms", params.waitMs);
+    }
+    if (params.screenshotWidth != null) {
+      payload.put("screenshot_width", params.screenshotWidth);
+    }
+    if (params.screenshotHeight != null) {
+      payload.put("screenshot_height", params.screenshotHeight);
+    }
+  }
+
+  private void buildRankBody(ObjectNode payload, RankParams params) {
+    payload.put("url", params.url);
+    payload.put("q", params.q);
+    if (params.gl != null) {
+      payload.put("gl", params.gl);
+    }
+    if (params.hl != null) {
+      payload.put("hl", params.hl);
+    }
+    if (params.tbs != null) {
+      payload.put("tbs", params.tbs);
+    }
+    if (params.pages != null) {
+      payload.put("pages", params.pages);
+    }
+    if (params.matchType != null) {
+      payload.put("match_type", params.matchType);
+    }
+  }
+
+  private HttpRequest buildRequest(String path, Consumer<ObjectNode> body) {
+    ObjectNode payload = MAPPER.createObjectNode();
+    body.accept(payload);
 
     byte[] json;
     try {
@@ -147,7 +215,7 @@ public final class SerpCheap {
     }
 
     return HttpRequest.newBuilder()
-        .uri(URI.create(baseUrl + "/v1/search"))
+        .uri(URI.create(baseUrl + path))
         .timeout(timeout)
         .header("Content-Type", "application/json")
         .header("x-api-key", apiKey)

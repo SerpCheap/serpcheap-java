@@ -71,6 +71,58 @@ for (OrganicResult r : res.organic) {
 }
 ```
 
+### Scrape a single URL
+
+Fetch and extract the content (and optionally a screenshot) of any page:
+
+```java
+ScrapeResponse res = client.scrape(ScrapeParams.builder()
+    .url("https://example.com/article")
+    .renderJs(true)          // render with a headless browser (optional)
+    .screenshot(true)        // capture a screenshot URL (optional)
+    .waitFor(".loaded")      // CSS selector to wait for, render_js only (optional)
+    .waitMs(500)             // extra settle time in ms, render_js only (optional)
+    .screenshotWidth(1280)   // px, default 1920, max 1920 (optional)
+    .screenshotHeight(720)   // px, default 1080, max 1920 (optional)
+    .build());
+
+System.out.println(res.status + " " + res.title);
+System.out.println(res.content);          // markdown
+System.out.println(res.contentText);      // plain text
+System.out.println(res.screenshotUrl);    // 48h presigned URL
+```
+
+`ScrapeParams.of("https://example.com")` builds a request with all options defaulted.
+
+### Rank tracking
+
+Find where a domain or URL ranks for a keyword across Google result pages:
+
+```java
+RankResponse res = client.rank(RankParams.builder()
+    .url("runnersworld.com")        // domain or full URL to locate
+    .q("best running shoes")        // keyword to rank for
+    .gl("us")                       // country (optional)
+    .hl("en")                       // UI language (optional)
+    .tbs("qdr:w")                   // time filter (optional)
+    .pages(3)                       // result pages to scan, 1-10, default 1 (optional)
+    .matchType("domain")            // "domain" or "exact", default "domain" (optional)
+    .build());
+
+if (res.found) {
+  System.out.println("Ranks at #" + res.rank);
+  for (RankMatch m : res.matches) {
+    System.out.println("page " + m.page + " pos " + m.positionOnPage + ": " + m.link);
+  }
+}
+
+for (OrganicResult r : res.organic) {
+  System.out.println(r.position + ". " + r.link);
+}
+```
+
+`res.partial` is `true` when one or more pages failed to fetch (see `res.pagesFailed`).
+
 ### Client options
 
 ```java
