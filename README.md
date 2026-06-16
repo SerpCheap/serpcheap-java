@@ -1,5 +1,9 @@
 # serpcheap — Java SDK
 
+[![Maven Central](https://img.shields.io/maven-central/v/cheap.serp/serpcheap)](https://central.sonatype.com/artifact/cheap.serp/serpcheap)
+[![javadoc](https://javadoc.io/badge2/cheap.serp/serpcheap/javadoc.svg)](https://javadoc.io/doc/cheap.serp/serpcheap)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
 Official Java client for the [serp.cheap](https://serp.cheap) Google SERP API.
 
 ## Install
